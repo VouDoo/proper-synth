@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+# Packages Proper into ready-to-install plugin bundles (.clap, .vst3) plus the
+# standalone app: `cargo xtask bundle proper-synth --release`.
+[dependencies]
+nih_plug_xtask = { git = "https://github.com/robbert-vdh/nih-plug.git" }

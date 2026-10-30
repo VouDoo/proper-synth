@@ -1,0 +1,93 @@
+# Builds Proper for Linux, Windows and macOS on every push, as downloadable
+# zips (see the run's "Artifacts"). Pushing a tag like `v0.1.0` also publishes
+# a GitHub Release with those zips attached.
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  package:
+    name: Build for ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux, os: ubuntu-22.04, targets: "" }
+          # One app for both Apple Silicon and Intel Macs.
+          - { name: macos, os: macos-latest, targets: "x86_64-apple-darwin,aarch64-apple-darwin" }
+          - { name: windows, os: windows-latest, targets: "" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libgl-dev libjack-dev libx11-xcb-dev libxcb1-dev libxcb-dri2-0-dev libxcb-icccm4-dev libxcursor-dev libxkbcommon-dev libxcb-shape0-dev libxcb-xfixes0-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.name }}
+
+      - name: Build the plugins and the app
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            export MACOSX_DEPLOYMENT_TARGET=10.13
+            cargo xtask bundle-universal proper-synth --release
+          else
+            cargo xtask bundle proper-synth --release
+          fi
+
+      # Zipped here rather than by the upload step, which would lose the
+      # "executable" permission and leave the app unable to start.
+      - name: Pack the zip
+        run: |
+          folder="proper-${{ matrix.name }}"
+          mkdir "$folder"
+          cp -R target/bundled/* "$folder/"
+          cp ".github/install/${{ matrix.name }}.txt" "$folder/INSTALL.txt"
+          cp LICENSE "$folder/"
+          # The builds include GPLv3 code (nih-plug's VST3 bindings).
+          cp .github/install/GPL-3.0.txt "$folder/LICENSE-GPL-3.0.txt"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            7z a -tzip "$folder.zip" "$folder"
+          else
+            zip -r -y "$folder.zip" "$folder"
+          fi
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: proper-${{ matrix.name }}
+          path: proper-${{ matrix.name }}.zip
+
+  release:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: artifacts/*.zip
+          generate_release_notes: true

@@ -1,0 +1,33 @@
+PROPER - a proper synth for house music (macOS, Apple Silicon and Intel)
+https://github.com/VouDoo/proper-synth
+
+What's in here
+  Proper.app    the standalone app
+  Proper.clap   the CLAP plugin
+  Proper.vst3   the VST3 plugin
+
+Plugins
+  Copy them into your plugin folders, then rescan in your DAW:
+    Proper.clap  ->  ~/Library/Audio/Plug-Ins/CLAP/
+    Proper.vst3  ->  ~/Library/Audio/Plug-Ins/VST3/
+  (In Finder: Go > Go to Folder..., paste the path. Create the folder if
+  it doesn't exist.)
+
+Standalone app
+  Drag Proper.app into Applications and open it.
+
+"Proper can't be opened" / "is damaged"?
+  These builds aren't signed by Apple, so macOS blocks them at first.
+  Open Terminal and run, for each file you copied:
+    xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/CLAP/Proper.clap
+    xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/Proper.vst3
+    xattr -dr com.apple.quarantine /Applications/Proper.app
+  Then open it again.
+
+Licence
+  Proper's source code is MIT-licensed (see LICENSE). These compiled builds
+  include GPLv3-licensed code (nih-plug's VST3 bindings), so the builds are
+  shared under the GPLv3 (see LICENSE-GPL-3.0.txt). The full source is at
+  the address above.
+
+Big up. Bo!

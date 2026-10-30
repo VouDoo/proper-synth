@@ -1,0 +1,37 @@
+[package]
+name = "proper-synth"
+version = "0.1.0"
+edition = "2024"
+description = "A proper synth for house music: a 4-operator FM synthesizer (CLAP, VST3, standalone)"
+license = "MIT"
+repository = "https://github.com/VouDoo/proper-synth"
+readme = "README.md"
+publish = false
+
+[workspace]
+members = ["xtask"]
+
+[lib]
+# cdylib = the CLAP/VST3 plugin, lib = so src/main.rs and examples can use it
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+# The standalone app. Named with an underscore because that's where
+# `cargo xtask bundle` looks for it when packaging releases.
+name = "proper_synth"
+path = "src/main.rs"
+
+[dependencies]
+# assert_process_allocs: debug builds crash loudly if the audio thread ever
+# allocates memory, which could cause dropouts. No effect on release builds.
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["standalone", "assert_process_allocs"] }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+# Draws the SVG logo in the GUI. Must match the egui version nih_plug_egui uses.
+egui_extras = { version = "0.31", default-features = false, features = ["svg"] }
+
+[dev-dependencies]
+hound = "3.5.1"
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
