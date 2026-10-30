@@ -208,16 +208,17 @@ impl Voice {
     }
 
     /// Compute a block of samples, *adding* them into `out` (other voices
-    /// are already in there).
-    pub fn render(&mut self, patch: &Patch, out: &mut [f32]) {
+    /// are already in there). `bend` multiplies every operator's frequency:
+    /// it's how the joystick (pitch bend and mod wheel) moves the pitch.
+    pub fn render(&mut self, patch: &Patch, bend: f32, out: &mut [f32]) {
         for sample in out {
-            *sample += self.next_sample(patch);
+            *sample += self.next_sample(patch, bend);
         }
     }
 
     /// Compute one sample.
     #[inline(always)]
-    pub fn next_sample(&mut self, patch: &Patch) -> f32 {
+    pub fn next_sample(&mut self, patch: &Patch, bend: f32) -> f32 {
         let algorithm = &ALGORITHMS[patch.algorithm - 1];
 
         // Glide: move the pitch a step toward the target note.
@@ -234,6 +235,8 @@ impl Voice {
         // Vibrato: for small pitch changes, raising the pitch by s semitones
         // is very nearly multiplying the frequency by 1 + 0.0578·s.
         let vibrato = 1.0 + lfo * patch.lfo_pitch * 0.057_762;
+        // Both move the pitch the same way: by scaling the phase increments.
+        let pitch_scale = vibrato * bend;
         // Wobble: scale the modulation between 0 and 2 times its normal amount.
         let wobble = (1.0 + lfo * patch.lfo_wobble).max(0.0);
         // Tremolo: full volume at the top of the swing, quieter at the bottom.
@@ -258,7 +261,7 @@ impl Voice {
                 phase_mod += patch.feedback * 0.5 * (self.feedback[0] + self.feedback[1]) / 2.0;
             }
 
-            let increment = (self.increments[i] as f32 * vibrato) as u32;
+            let increment = (self.increments[i] as f32 * pitch_scale) as u32;
             let env = self.envs[i].next_sample();
             let sine = self.ops[i].next_sample(increment, phase_mod * wobble);
             out[i] = sine * env * self.levels[i];

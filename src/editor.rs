@@ -191,6 +191,10 @@ fn sound_section(ui: &mut Ui, params: &SynthParams, setter: &ParamSetter) {
         ui.label("Glide");
         slider(ui, &params.glide, setter);
         ui.end_row();
+
+        ui.label("Bend Range");
+        slider(ui, &params.bend_range, setter);
+        ui.end_row();
     });
 }
 

@@ -53,8 +53,10 @@ impl Plugin for Proper {
         ..AudioIOLayout::const_default()
     }];
 
-    // Notes only: knobs on a controller are mapped to parameters in the DAW.
-    const MIDI_INPUT: MidiConfig = MidiConfig::Basic;
+    // Notes, plus the classic playing controls: joystick, sustain pedal and
+    // the "panic" messages. Knobs on a controller are mapped to parameters
+    // in the DAW instead.
+    const MIDI_INPUT: MidiConfig = MidiConfig::MidiCCs;
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
     type SysExMessage = ();
@@ -118,6 +120,19 @@ impl Plugin for Proper {
                             self.synth.note_on(note, velocity)
                         }
                         NoteEvent::NoteOff { note, .. } => self.synth.note_off(note),
+                        // nih-plug gives the bend as 0..1 with 0.5 centered.
+                        NoteEvent::MidiPitchBend { value, .. } => {
+                            self.synth.set_pitch_bend(value * 2.0 - 1.0)
+                        }
+                        // CC numbers with a standard meaning in MIDI.
+                        NoteEvent::MidiCC { cc, value, .. } => match cc {
+                            1 => self.synth.set_mod_wheel(value),
+                            64 => self.synth.set_sustain(value >= 0.5),
+                            120 => self.synth.all_sound_off(),
+                            121 => self.synth.reset_controllers(),
+                            123 => self.synth.all_notes_off(),
+                            _ => {}
+                        },
                         _ => {}
                     }
                     next_event = context.next_event();

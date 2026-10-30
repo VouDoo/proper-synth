@@ -42,6 +42,7 @@ const BASE: Patch = Patch {
     volume_db: 0.0,
     mono: false,
     glide: 0.0,
+    bend_range: 2.0,
     lfo_rate: 5.0,
     lfo_sync: false,
     lfo_division: 6, // 1/8

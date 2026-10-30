@@ -87,6 +87,11 @@ impl Polyphony {
         }
     }
 
+    /// The note mono mode is playing (it always uses voice 0).
+    pub fn mono_note(&self) -> u8 {
+        self.voices[0].note
+    }
+
     /// Let every note ring out, e.g. when switching between mono and poly.
     pub fn release_all(&mut self) {
         self.held.clear();
@@ -111,12 +116,13 @@ impl Polyphony {
         }
     }
 
-    /// Fill `out` with the sum of every sounding voice.
-    pub fn render(&mut self, patch: &Patch, out: &mut [f32]) {
+    /// Fill `out` with the sum of every sounding voice. `bend` scales every
+    /// voice's frequency (see `Voice::render`).
+    pub fn render(&mut self, patch: &Patch, bend: f32, out: &mut [f32]) {
         out.fill(0.0);
         for voice in &mut self.voices {
             if voice.is_active() {
-                voice.render(patch, out);
+                voice.render(patch, bend, out);
             }
         }
     }
@@ -221,7 +227,7 @@ mod tests {
         for note in 0..MAX_NOTES as u8 {
             poly.note_on(40 + note, 1.0, &patch, SR);
         }
-        poly.render(&patch, &mut out);
+        poly.render(&patch, 1.0, &mut out);
 
         // One note too many: the oldest (note 40) starts fading, but the
         // new note plays in a spare voice right away.
@@ -232,7 +238,7 @@ mod tests {
 
         // 3 ms later the stolen voice is free again.
         for _ in 0..(0.004 * SR) as usize / out.len() + 1 {
-            poly.render(&patch, &mut out);
+            poly.render(&patch, 1.0, &mut out);
         }
         assert_eq!(count(&poly, |v| v.is_active()), MAX_NOTES);
     }
@@ -255,7 +261,7 @@ mod tests {
         poly.note_off(40, true); // nothing held: the note releases
         let mut out = [0.0; 64];
         for _ in 0..(5.0 * SR) as usize / out.len() {
-            poly.render(&patch, &mut out);
+            poly.render(&patch, 1.0, &mut out);
         }
         assert_eq!(count(&poly, |v| v.is_active()), 0);
     }

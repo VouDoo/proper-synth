@@ -26,7 +26,7 @@ Four-operator FM, built from scratch in Rust for 2-step, speed garage and UK hou
 - **Clean as anything.** 2× oversampling against aliasing, a lookahead limiter instead of nasty clipping, no clicks when voices get stolen, and smooth knobs with no zipper noise.
 - **Light on the CPU.** About 10–17% of one core with 32 notes going at once, about 1% for the mono basses. 2 ms of latency all in.
 
-Notes only on the MIDI side: map your controller's knobs to the parameters in your DAW. Keeps it simple, bruv.
+Notes and the joystick on the MIDI side: left/right bends the pitch (2 semitones by default, set with Bend Range), up/down is the mod wheel and adds vibrato. A sustain pedal works too. Map your controller's knobs to the parameters in your DAW. Keeps it simple, bruv.
 
 ---
 

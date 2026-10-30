@@ -92,6 +92,9 @@ pub struct Patch {
     pub mono: bool,
     /// How long a mono slide takes, in seconds (0 = jump straight there).
     pub glide: f32,
+    /// How far the pitch bend (the joystick's left/right) goes, in semitones.
+    /// 2 is the classic setting; 12 bends a whole octave.
+    pub bend_range: f32,
 
     /// The LFO ("low frequency oscillator") is a slow sine wave that moves
     /// things up and down over time. Its speed, in Hz (cycles per second):

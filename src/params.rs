@@ -47,6 +47,8 @@ pub struct SynthParams {
     pub mono: BoolParam,
     #[id = "glide"]
     pub glide: FloatParam,
+    #[id = "bend_range"]
+    pub bend_range: FloatParam,
     #[id = "lfo_rate"]
     pub lfo_rate: FloatParam,
     #[id = "lfo_sync"]
@@ -159,6 +161,16 @@ impl SynthParams {
             .with_value_to_string(formatters::v2s_f32_rounded(1)),
             mono: BoolParam::new("Mono", patch.mono),
             glide: time_param("Glide", patch.glide, 0.0, 2.0),
+            bend_range: FloatParam::new(
+                "Bend Range",
+                patch.bend_range,
+                FloatRange::Linear {
+                    min: 0.0,
+                    max: 12.0,
+                },
+            )
+            .with_step_size(1.0)
+            .with_unit(" st"),
             lfo_rate: FloatParam::new(
                 "LFO Rate",
                 patch.lfo_rate,
@@ -215,6 +227,7 @@ impl SynthParams {
             volume_db: self.volume.smoothed.next_step(steps),
             mono: self.mono.value(),
             glide: self.glide.value(),
+            bend_range: self.bend_range.value(),
             lfo_rate: self.lfo_rate.value(),
             lfo_sync: self.lfo_sync.value(),
             lfo_division: self.lfo_division.value() as usize,
@@ -240,6 +253,7 @@ impl SynthParams {
         set(setter, &self.volume, patch.volume_db);
         set(setter, &self.mono, patch.mono);
         set(setter, &self.glide, patch.glide);
+        set(setter, &self.bend_range, patch.bend_range);
         set(setter, &self.lfo_rate, patch.lfo_rate);
         set(setter, &self.lfo_sync, patch.lfo_sync);
         set(setter, &self.lfo_division, patch.lfo_division as i32);
